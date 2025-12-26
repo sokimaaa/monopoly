@@ -125,7 +125,7 @@ class ConsoleGameController(
             case "b" | "buy" =>
               println("❌ Roll dice first!")
 
-            case "e" | "end" if turnActive =>
+            case "e" | "end" if turnActive || game.currentPlayer.isBankrupt =>
               endTurnUseCase.execute(gameId)
               turnActive = false
 

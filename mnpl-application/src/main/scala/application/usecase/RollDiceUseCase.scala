@@ -19,11 +19,15 @@ class RollDiceUseCase(
     for {
       game <- gameRepository.findById(gameId).toRight("Game not found")
       _ <- Either.cond(!game.isFinished, (), "Game is finished")
+      _ <- Either.cond(!game.currentPlayer.isBankrupt, (), "Current player is bankrupt")
+      _ <- Either.cond(!game.turnState.diceRolled, (), "Dice already rolled this turn")
 
       roll = diceRoller.roll()
       (movedPlayer, moveEvent) = movementService.movePlayer(game.currentPlayer, roll, game.board)
 
-      gameAfterMove = game.updatePlayer(movedPlayer)
+      gameAfterMove = game
+        .recordDiceRoll(roll)
+        .updatePlayer(movedPlayer)
       square <- gameAfterMove.board.getSquare(movedPlayer.position).toRight("Invalid position")
 
       result <- handleSquareAction(gameAfterMove, square)

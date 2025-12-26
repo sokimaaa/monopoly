@@ -14,4 +14,3 @@ object GameCommand {
 
   case class EndTurn(gameId: GameId) extends GameCommand
 }
-
