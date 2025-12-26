@@ -13,7 +13,9 @@ class EndTurnUseCase(
   def execute(gameId: GameId): Either[String, Game] = {
     for {
       game <- gameRepository.findById(gameId).toRight("Game not found")
-      nextGame = game.advanceTurn.checkGameOver
+      nextGame = game
+        .advanceTurnSkippingBankrupt
+        .checkGameOver
 
       _ <- gameRepository.update(nextGame)
     } yield {
@@ -25,4 +27,3 @@ class EndTurnUseCase(
     }
   }
 }
-

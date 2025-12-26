@@ -6,6 +6,10 @@ import domain.*
 class SquareActionService(propertyService: PropertyService) {
 
   def determineAction(square: Square, game: Game): SquareAction = {
+    if (!game.rules.landingActionsEnabled) {
+      return SquareAction.NoAction
+    }
+
     square match {
       case Square.PropertySquare(property) =>
         property.ownerId match {
