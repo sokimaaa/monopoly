@@ -36,7 +36,7 @@ class ConsoleGameController(
     val player = game.currentPlayer
     println("\n" + "-" * 50)
     println(s"Turn: ${player.name} (${player.id.value})")
-    println(s"Position: ${player.position.value} | Balance: $${player.balance.amount}")
+    println(s"Position: ${player.position.value} | Balance: $$${player.balance.amount}")
     println(s"Properties: ${player.ownedProperties.size}")
     println("-" * 50)
   }
@@ -47,15 +47,15 @@ class ConsoleGameController(
         println(s"\n📍 ${prop.name}")
         prop.ownerId match {
           case None =>
-            println(s"   💰 Price: $${prop.price.amount} | Rent: $${prop.rent.amount}")
+            println(s"   💰 Price: $$${prop.price.amount} | Rent: $$${prop.rent.amount}")
           case Some(ownerId) =>
             val owner = game.players.find(_.id == ownerId).get
-            println(s"   👤 Owner: ${owner.name} | Rent: $${prop.rent.amount}")
+            println(s"   👤 Owner: ${owner.name} | Rent: $$${prop.rent.amount}")
         }
       case Square.Go(_) => println("\n📍 GO")
       case Square.Jail(_) => println("\n📍 Jail (Just Visiting)")
       case Square.FreeParking(_) => println("\n📍 Free Parking")
-      case Square.Tax(_, amt) => println(s"\n📍 Tax ($${amt.amount})")
+      case Square.Tax(_, amt) => println(s"\n📍 Tax ($$${amt.amount})")
       case _ => println("\n📍 Special Square")
     }
   }
@@ -65,7 +65,7 @@ class ConsoleGameController(
     game.players.foreach { p =>
       val indicator = if (p.id == game.currentPlayer.id) ">>>" else "   "
       val status = if (p.isBankrupt) "[BANKRUPT]" else ""
-      println(s"$indicator ${p.name}: $${p.balance.amount} | Props: ${p.ownedProperties.size} $status")
+      println(s"$indicator ${p.name}: $$${p.balance.amount} | Props: ${p.ownedProperties.size} $status")
     }
     println()
   }
@@ -91,7 +91,7 @@ class ConsoleGameController(
           winner.foreach { w =>
             println("\n" + "=" * 50)
             println(s"🏆 ${w.name} WINS! 🏆")
-            println(s"Final Balance: $${w.balance.amount}")
+            println(s"Final Balance: $$${w.balance.amount}")
             println("=" * 50)
           }
           running = false
