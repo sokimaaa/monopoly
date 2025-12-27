@@ -10,10 +10,9 @@ class RollDiceUseCase(
     propertyRepository: PropertyRepository,
     movementService: MovementService,
     squareActionService: SquareActionService,
-    propertyService: PropertyService,
     diceRoller: DiceRoller,
     eventPublisher: EventPublisher,
-    paymentService: PaymentService = new PaymentService
+    paymentService: PaymentService
 ) {
 
   def execute(gameId: GameId): Either[String, (Game, DiceRoll, List[GameEvent])] =

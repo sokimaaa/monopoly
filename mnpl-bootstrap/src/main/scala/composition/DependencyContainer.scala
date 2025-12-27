@@ -38,6 +38,7 @@ object DependencyContainer {
   val diceRoller: DiceRoller                   = new RandomDiceRoller()
   val movementService: MovementService         = new MovementService(gameConfig)
   val propertyService: PropertyService         = new PropertyService()
+  val paymentService: PaymentService           = new PaymentService()
   val squareActionService: SquareActionService = new SquareActionService(propertyService)
 
   // Use Cases
@@ -53,9 +54,9 @@ object DependencyContainer {
     propertyRepository,
     movementService,
     squareActionService,
-    propertyService,
     diceRoller,
-    eventPublisher
+    eventPublisher,
+    paymentService
   )
 
   val buyPropertyUseCase: BuyPropertyUseCase = new BuyPropertyUseCase(
