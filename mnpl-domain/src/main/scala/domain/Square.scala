@@ -20,6 +20,8 @@ object Square {
 
   case class Tax(position: Position, amount: Money) extends Square
 
+  case class PercentTax(position: Position, percent: Int) extends Square
+
   case class Chance(position: Position) extends Square
 
   case class CommunityChest(position: Position) extends Square

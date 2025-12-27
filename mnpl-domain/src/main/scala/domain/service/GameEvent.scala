@@ -12,6 +12,9 @@ object GameEvent {
   case class PropertyPurchased(playerId: PlayerId, propertyId: PropertyId, price: Money)
       extends GameEvent
 
+  case class PropertyAvailable(playerId: PlayerId, propertyId: PropertyId, price: Money)
+      extends GameEvent
+
   case class RentPaid(
       fromPlayerId: PlayerId,
       toPlayerId: PlayerId,

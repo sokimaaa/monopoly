@@ -7,10 +7,11 @@ case class Player(
     position: Position,
     balance: Money,
     ownedProperties: Set[PropertyId],
+    bankrupt: Boolean = false,
     inJail: Boolean = false,
     jailTurns: Int = 0
 ) {
-  def isBankrupt: Boolean = balance.amount < 0
+  def isBankrupt: Boolean = bankrupt
 
   def canAfford(price: Money): Boolean = balance >= price
 
@@ -28,4 +29,8 @@ case class Player(
       balance = balance - price,
       ownedProperties = ownedProperties + propertyId
     )
+
+  def clearProperties: Player = copy(ownedProperties = Set.empty)
+
+  def markBankrupt: Player = copy(bankrupt = true, balance = Money(0))
 }

@@ -15,4 +15,6 @@ case class Property(
   def isOwnedBy(playerId: PlayerId): Boolean = ownerId.contains(playerId)
 
   def assignOwner(playerId: PlayerId): Property = copy(ownerId = Some(playerId))
+
+  def clearOwner: Property = copy(ownerId = None)
 }

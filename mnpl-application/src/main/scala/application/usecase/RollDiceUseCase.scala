@@ -12,7 +12,8 @@ class RollDiceUseCase(
     squareActionService: SquareActionService,
     propertyService: PropertyService,
     diceRoller: DiceRoller,
-    eventPublisher: EventPublisher
+    eventPublisher: EventPublisher,
+    paymentService: PaymentService = new PaymentService
 ) {
 
   def execute(gameId: GameId): Either[String, (Game, DiceRoll, List[GameEvent])] =
@@ -31,44 +32,61 @@ class RollDiceUseCase(
       square <- gameAfterMove.board.getSquare(movedPlayer.position).toRight("Invalid position")
 
       result <- handleSquareAction(gameAfterMove, square)
-      (finalGame, additionalEvents) = result // todo: hack used, need to think of better way
-
-      _ <- gameRepository.update(finalGame)
+      finalizedGame = result.game.checkGameOver
+      finishEvent = if (finalizedGame.isFinished) {
+        finalizedGame.activePlayers.headOption.map(w => GameEvent.GameFinished(w.id))
+      } else {
+        None
+      }
+      _ <- updateProperties(result.releasedProperties)
+      _ <- gameRepository.update(finalizedGame)
     } yield {
-      val allEvents = moveEvent :: additionalEvents
+      val allEvents = moveEvent :: (result.events ++ finishEvent.toList)
       allEvents.foreach(eventPublisher.publish)
-      (finalGame, roll, allEvents)
+      (finalizedGame, roll, allEvents)
     }
 
   private def handleSquareAction(
       game: Game,
       square: Square
-  ): Either[String, (Game, List[GameEvent])] =
+  ): Either[String, ActionResult] =
     squareActionService.determineAction(square, game) match {
       case SquareAction.NoAction =>
-        Right((game, Nil))
+        Right(ActionResult(game, Nil, Nil))
+
+      case SquareAction.PropertyAvailable(property) =>
+        val event = GameEvent.PropertyAvailable(game.currentPlayer.id, property.id, property.price)
+        Right(ActionResult(game, List(event), Nil))
 
       case SquareAction.PayRentAction(property, landlordId) =>
         val tenant   = game.currentPlayer
-        val landlord = game.players.find(_.id == landlordId).get
-
-        val (updatedTenant, updatedLandlord, rentEvent) =
-          propertyService.payRent(tenant, landlord, property)
-
-        val updatedGame = game
-          .updatePlayer(updatedTenant)
-          .updatePlayer(updatedLandlord)
-
-        Right((updatedGame, List(rentEvent)))
+        val payment = paymentService.pay(game, tenant.id, Payee.Player(landlordId), property.rent)
+        payment.map { result =>
+          val rentEvent =
+            GameEvent.RentPaid(tenant.id, landlordId, property.rent, property.name)
+          ActionResult(result.game, rentEvent :: result.events, result.releasedProperties)
+        }
 
       case SquareAction.PayTaxAction(amount) =>
         val player        = game.currentPlayer
-        val updatedPlayer = player.pay(amount)
-        val taxEvent      = GameEvent.TaxPaid(player.id, amount)
-
-        Right((game.updatePlayer(updatedPlayer), List(taxEvent)))
+        val payment = paymentService.pay(game, player.id, Payee.Bank, amount)
+        payment.map { result =>
+          val taxEvent = GameEvent.TaxPaid(player.id, amount)
+          ActionResult(result.game, taxEvent :: result.events, result.releasedProperties)
+        }
 
       case _ =>
-        Right((game, Nil))
+        Right(ActionResult(game, Nil, Nil))
     }
+
+  private def updateProperties(properties: List[Property]): Either[String, Unit] =
+    properties.foldLeft(Right(()): Either[String, Unit]) { (acc, property) =>
+      acc.flatMap(_ => propertyRepository.update(property).map(_ => ()))
+    }
+
+  private case class ActionResult(
+      game: Game,
+      events: List[GameEvent],
+      releasedProperties: List[Property]
+  )
 }

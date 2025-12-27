@@ -19,11 +19,17 @@ class BuyPropertyUseCase(
 
       square   <- game.board.getSquare(player.position).toRight("Invalid position")
       property <- extractProperty(square)
+      propertyForPurchase = ownerBankrupt(property, game) match {
+        case true  => property.clearOwner
+        case false => property
+      }
 
-      result <- propertyService.purchaseProperty(player, property)
+      result <- propertyService.purchaseProperty(player, propertyForPurchase)
       (updatedPlayer, updatedProperty, purchaseEvent) = result
 
-      updatedGame = game.updatePlayer(updatedPlayer)
+      updatedGame = game
+        .updatePlayer(updatedPlayer)
+        .updateProperty(updatedProperty)
 
       _ <- propertyRepository.update(updatedProperty)
       _ <- gameRepository.update(updatedGame)
@@ -36,4 +42,7 @@ class BuyPropertyUseCase(
     case Square.PropertySquare(property) => Right(property)
     case _                               => Left("No property at current position")
   }
+
+  private def ownerBankrupt(property: Property, game: Game): Boolean =
+    property.ownerId.flatMap(id => game.players.find(_.id == id)).exists(_.isBankrupt)
 }
