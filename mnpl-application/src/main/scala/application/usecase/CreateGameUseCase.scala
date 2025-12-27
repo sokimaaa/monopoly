@@ -6,18 +6,18 @@ import domain.service.GameConfig
 import domain.*
 
 class CreateGameUseCase(
-                         gameRepository: GameRepository,
-                         propertyRepository: PropertyRepository,
-                         boardFactory: BoardFactory,
-                         config: GameConfig
-                       ) {
+    gameRepository: GameRepository,
+    propertyRepository: PropertyRepository,
+    boardFactory: BoardFactory,
+    config: GameConfig
+) {
 
-  def execute(playerNames: List[String]): Either[String, Game] = {
+  def execute(playerNames: List[String]): Either[String, Game] =
     if (playerNames.length < 2 || playerNames.length > 4) {
       Left("Game requires 2-4 players")
     } else {
       val gameId = GameId(java.util.UUID.randomUUID().toString)
-      val board = boardFactory.createBoard()
+      val board  = boardFactory.createBoard()
 
       val players = playerNames.zipWithIndex.map { case (name, idx) =>
         Player(
@@ -38,5 +38,4 @@ class CreateGameUseCase(
 
       gameRepository.save(game)
     }
-  }
 }

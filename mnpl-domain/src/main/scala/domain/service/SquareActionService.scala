@@ -5,7 +5,7 @@ import domain.*
 
 class SquareActionService(propertyService: PropertyService) {
 
-  def determineAction(square: Square, game: Game): SquareAction = {
+  def determineAction(square: Square, game: Game): SquareAction =
     square match {
       case Square.PropertySquare(property) =>
         property.ownerId match {
@@ -15,8 +15,7 @@ class SquareActionService(propertyService: PropertyService) {
         }
 
       case Square.Tax(_, amount) => SquareAction.PayTaxAction(amount)
-      case Square.GoToJail(_) => SquareAction.GoToJailAction
-      case _ => SquareAction.NoAction
+      case Square.GoToJail(_)    => SquareAction.GoToJailAction
+      case _                     => SquareAction.NoAction
     }
-  }
 }

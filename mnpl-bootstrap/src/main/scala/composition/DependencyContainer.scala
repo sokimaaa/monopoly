@@ -26,7 +26,7 @@ object DependencyContainer {
   val gameRepository: GameRepository = new InMemoryGameRepository()
 
   lazy val propertyRepository: PropertyRepository = {
-    val board = boardFactory.createBoard()
+    val board      = boardFactory.createBoard()
     val properties = boardFactory.extractProperties(board)
     new InMemoryPropertyRepository(properties)
   }
@@ -35,9 +35,9 @@ object DependencyContainer {
   val eventPublisher: EventPublisher = new ConsoleEventPublisher()
 
   // Domain Services
-  val diceRoller: DiceRoller = new RandomDiceRoller()
-  val movementService: MovementService = new MovementService(gameConfig)
-  val propertyService: PropertyService = new PropertyService()
+  val diceRoller: DiceRoller                   = new RandomDiceRoller()
+  val movementService: MovementService         = new MovementService(gameConfig)
+  val propertyService: PropertyService         = new PropertyService()
   val squareActionService: SquareActionService = new SquareActionService(propertyService)
 
   // Use Cases
