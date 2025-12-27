@@ -36,6 +36,39 @@ case class Game(
         (copy(players = updatedPlayers, board = updatedBoard), releasedProperties)
     }
 
+  def transferPropertiesToCreditor(
+      debtorId: PlayerId,
+      creditorId: PlayerId
+  ): (Game, List[Property]) = {
+    val debtorOpt   = players.find(_.id == debtorId)
+    val creditorOpt = players.find(_.id == creditorId)
+    (debtorOpt, creditorOpt) match {
+      case (Some(debtor), Some(creditor)) =>
+        val propertyIds = debtor.ownedProperties
+        var transferred: List[Property] = Nil
+        val updatedSquares = board.squares.map {
+          case Square.PropertySquare(property) if propertyIds.contains(property.id) =>
+            val updated = property.assignOwner(creditorId)
+            transferred = updated :: transferred
+            Square.PropertySquare(updated)
+          case other => other
+        }
+        val updatedBoard = board.copy(squares = updatedSquares)
+        val updatedDebtor = debtor.clearProperties.markBankrupt
+        val updatedCreditor = creditor.copy(
+          ownedProperties = creditor.ownedProperties ++ propertyIds
+        )
+        val updatedPlayers = players.map {
+          case p if p.id == debtorId   => updatedDebtor
+          case p if p.id == creditorId => updatedCreditor
+          case p                       => p
+        }
+        (copy(players = updatedPlayers, board = updatedBoard), transferred.reverse)
+      case _ =>
+        (this, Nil)
+    }
+  }
+
   def advanceTurn: Game = copy(currentPlayerIndex = nextPlayerIndex).resetTurnState
 
   def advanceTurnSkippingBankrupt: Game =
@@ -44,14 +77,18 @@ case class Game(
       case None        => endGame
     }
 
-  def recordDiceRoll(roll: DiceRoll): Game = {
+  def recordDiceRoll(roll: DiceRoll): Game =
+    recordDiceRoll(roll, extraRoll = false)
+
+  def recordDiceRoll(roll: DiceRoll, extraRoll: Boolean): Game = {
     val updatedDoublesCount =
       if (roll.isDoubles) turnState.doublesCount + 1 else 0
 
     copy(
       turnState = turnState.copy(
         diceRolled = true,
-        doublesCount = updatedDoublesCount
+        doublesCount = updatedDoublesCount,
+        extraRoll = extraRoll
       )
     )
   }
@@ -64,6 +101,9 @@ case class Game(
 
   def checkGameOver: Game =
     if (activePlayers.length <= 1) endGame else this
+
+  def allowExtraRoll: Game =
+    copy(turnState = turnState.copy(diceRolled = false, extraRoll = false))
 
   private def nextActivePlayerIndex: Option[Int] = {
     val total      = players.length

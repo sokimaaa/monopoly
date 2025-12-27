@@ -32,5 +32,12 @@ case class Player(
 
   def clearProperties: Player = copy(ownedProperties = Set.empty)
 
-  def markBankrupt: Player = copy(bankrupt = true, balance = Money(0))
+  def markBankrupt: Player = copy(bankrupt = true, balance = Money(0), inJail = false, jailTurns = 0)
+
+  def sendToJail(jailPosition: Position): Player =
+    copy(position = jailPosition, inJail = true, jailTurns = 0)
+
+  def releaseFromJail: Player = copy(inJail = false, jailTurns = 0)
+
+  def recordJailAttempt: Player = copy(jailTurns = jailTurns + 1)
 }

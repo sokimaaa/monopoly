@@ -26,4 +26,7 @@ case class Board(squares: Vector[Square]) {
     }
     (copy(squares = updatedSquares), released.reverse)
   }
+
+  def jailPosition: Option[Position] =
+    squares.collectFirst { case Square.Jail(position) => position }
 }
