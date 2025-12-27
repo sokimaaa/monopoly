@@ -53,12 +53,24 @@ class PaymentService {
             game.players.find(_.id == payeeId) match {
               case None => Left("Payee not found")
               case Some(payee) =>
-                val updatedPayer  = payerAfterLiquidation.pay(amount)
-                val updatedPayee  = payee.receive(amount)
-                val updatedGame   = gameAfterLiquidation
-                  .updatePlayer(updatedPayer)
-                  .updatePlayer(updatedPayee)
-                Right(PaymentResult(updatedGame, Nil, Nil))
+                if (payerAfterLiquidation.canAfford(amount)) {
+                  val updatedPayer  = payerAfterLiquidation.pay(amount)
+                  val updatedPayee  = payee.receive(amount)
+                  val updatedGame   = gameAfterLiquidation
+                    .updatePlayer(updatedPayer)
+                    .updatePlayer(updatedPayee)
+                  Right(PaymentResult(updatedGame, Nil, Nil))
+                } else {
+                  val (bankruptGame, transferredProperties) =
+                    gameAfterLiquidation.transferPropertiesToCreditor(fromPlayerId, payeeId)
+                  Right(
+                    PaymentResult(
+                      bankruptGame,
+                      List(GameEvent.PlayerBankrupt(fromPlayerId)),
+                      transferredProperties
+                    )
+                  )
+                }
             }
         }
     }

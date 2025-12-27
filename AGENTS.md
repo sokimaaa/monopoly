@@ -1,5 +1,19 @@
 # Repository Guidelines
 
+## Business feature implementation
+
+In case, I am asked to implement a new business feature, you will follow the steps below:
+- Work on domain and application layers only.
+- Analyze if we need to extend existing code : 
+  - If yes then extend it gracefully, following existing patterns.
+  - If no then implement new code in domain and application layers.
+- Implement next iteration of functionality. 
+- Create checklist of what were implemented before (green) and what was implemented by you in current iteration (red). 
+- If feature already exist - don't need to make changes. 
+- The code must follow acceptance criteria (if it already fits much more - no need to write disabling logic, integrate it in current iteration).
+- If you need to add dependencies do it on bootstrap layer, it is allowed if new dependencies appear.
+- Avoid making changes on infrastructure layers, unless it is strictly necessary for feature implementation. Additionally explain what you did and show as black in final checklist.
+
 ## Project Structure & Module Organization
 - Multi-module sbt build. Each module is in `mnpl-*` with Scala sources under `src/main/scala`.
 - Core domain logic lives in `mnpl-domain` (entities, value objects, domain services).
