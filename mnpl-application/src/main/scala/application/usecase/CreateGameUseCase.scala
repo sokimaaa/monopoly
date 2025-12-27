@@ -2,7 +2,7 @@ package com.sokima.monopoly
 package application.usecase
 
 import application.port.{BoardFactory, GameRepository, PropertyRepository}
-import domain.service.GameConfig
+import domain.service.{DeckFactory, GameConfig}
 import domain.*
 
 class CreateGameUseCase(
@@ -33,7 +33,9 @@ class CreateGameUseCase(
         id = gameId,
         board = board,
         players = players,
-        currentPlayerIndex = 0
+        currentPlayerIndex = 0,
+        chanceDeck = DeckFactory.chanceDeck(config.deckSeed),
+        communityDeck = DeckFactory.communityDeck(config.deckSeed)
       )
 
       gameRepository.save(game)

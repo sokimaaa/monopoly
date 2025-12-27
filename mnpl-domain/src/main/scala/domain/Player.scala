@@ -8,6 +8,7 @@ case class Player(
     balance: Money,
     ownedProperties: Set[PropertyId],
     bankrupt: Boolean = false,
+    getOutOfJailFree: Int = 0,
     inJail: Boolean = false,
     jailTurns: Int = 0
 ) {
@@ -30,6 +31,9 @@ case class Player(
       ownedProperties = ownedProperties + propertyId
     )
 
+  def addProperty(propertyId: PropertyId): Player =
+    copy(ownedProperties = ownedProperties + propertyId)
+
   def clearProperties: Player = copy(ownedProperties = Set.empty)
 
   def markBankrupt: Player = copy(bankrupt = true, balance = Money(0), inJail = false, jailTurns = 0)
@@ -40,4 +44,10 @@ case class Player(
   def releaseFromJail: Player = copy(inJail = false, jailTurns = 0)
 
   def recordJailAttempt: Player = copy(jailTurns = jailTurns + 1)
+
+  def receiveGetOutOfJailFree: Player = copy(getOutOfJailFree = getOutOfJailFree + 1)
+
+  def canUseGetOutOfJailFree: Boolean = getOutOfJailFree > 0
+
+  def useGetOutOfJailFree: Player = copy(getOutOfJailFree = math.max(0, getOutOfJailFree - 1))
 }

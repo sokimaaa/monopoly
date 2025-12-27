@@ -15,6 +15,7 @@ class BuyPropertyUseCase(
   def execute(gameId: GameId): Either[String, (Game, Property, GameEvent.PropertyPurchased)] =
     for {
       game <- gameRepository.findById(gameId).toRight("Game not found")
+      _ <- Either.cond(game.auction.isEmpty, (), "Auction in progress")
       player = game.currentPlayer
 
       square   <- game.board.getSquare(player.position).toRight("Invalid position")

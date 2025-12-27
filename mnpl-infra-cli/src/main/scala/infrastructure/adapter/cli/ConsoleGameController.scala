@@ -3,12 +3,15 @@ package infrastructure.adapter.cli
 
 import application.port.GameRepository
 import application.usecase.*
-import domain.{Game, GameId, Square}
+import domain.{Game, GameId, Money, PlayerId, Square}
 
 class ConsoleGameController(
     createGameUseCase: CreateGameUseCase,
     rollDiceUseCase: RollDiceUseCase,
     buyPropertyUseCase: BuyPropertyUseCase,
+    declinePropertyUseCase: DeclinePropertyUseCase,
+    auctionBidUseCase: AuctionBidUseCase,
+    payJailFineUseCase: PayJailFineUseCase,
     endTurnUseCase: EndTurnUseCase,
     gameRepository: GameRepository
 ) {
@@ -38,6 +41,17 @@ class ConsoleGameController(
     println(s"Turn: ${player.name} (${player.id.value})")
     println(s"Position: ${player.position.value} | Balance: $$${player.balance.amount}")
     println(s"Properties: ${player.ownedProperties.size}")
+    game.auction.foreach { auction =>
+      val propertyName = game.board.squares.collectFirst {
+        case Square.PropertySquare(prop) if prop.id == auction.propertyId => prop.name
+      }.getOrElse("Unknown Property")
+      val highestBidder = auction.highestBidderId
+        .flatMap(id => game.players.find(_.id == id).map(_.name))
+        .getOrElse("None")
+      println(
+        s"Auction: $propertyName | Highest: $$${auction.highestBid.amount} by $highestBidder"
+      )
+    }
     println("-" * 50)
   }
 
@@ -71,8 +85,13 @@ class ConsoleGameController(
     println()
   }
 
-  def promptAction(): String = {
-    println("\n[r]oll | [b]uy | [e]nd turn | [s]tatus | [q]uit")
+  def promptAction(game: Game, turnActive: Boolean): String = {
+    if (game.auction.isDefined) {
+      println("\nAuction in progress: [a]bid | [f]old | [s]tatus | [q]uit")
+    } else {
+      val jailOption = if (game.currentPlayer.inJail && !turnActive) " | [p]ay jail fine" else ""
+      println(s"\n[r]oll | [b]uy | [d]ecline | [e]nd turn | [s]tatus$jailOption | [q]uit")
+    }
     print("> ")
     scala.io.StdIn.readLine().trim.toLowerCase
   }
@@ -101,7 +120,7 @@ class ConsoleGameController(
           displayGameState(game)
           displaySquareInfo(game)
 
-          promptAction() match {
+          promptAction(game, turnActive) match {
             case "r" | "roll" if !turnActive =>
               rollDiceUseCase.execute(gameId) match {
                 case Right((_, roll, _)) =>
@@ -126,6 +145,44 @@ class ConsoleGameController(
             case "b" | "buy" =>
               println("❌ Roll dice first!")
 
+            case "d" | "decline" if turnActive =>
+              declinePropertyUseCase.execute(gameId) match {
+                case Right(_) =>
+                  println("🔨 Property declined. Auction started.")
+                case Left(error) =>
+                  println(s"❌ $error")
+              }
+
+            case "d" | "decline" =>
+              println("❌ Roll dice first!")
+
+            case "a" | "bid" if game.auction.isDefined =>
+              val bidderId = promptBidderId(game)
+              val amount   = Money(readInt("Enter bid amount:", defaultValue = 0))
+              auctionBidUseCase.placeBid(gameId, bidderId, amount) match {
+                case Right(_) =>
+                  println(s"✅ Bid placed: $$${amount.amount}")
+                case Left(error) =>
+                  println(s"❌ $error")
+              }
+
+            case "f" | "fold" if game.auction.isDefined =>
+              val bidderId = promptBidderId(game)
+              auctionBidUseCase.fold(gameId, bidderId) match {
+                case Right(_) =>
+                  println("✅ Bidder folded.")
+                case Left(error) =>
+                  println(s"❌ $error")
+              }
+
+            case "p" | "pay" if game.currentPlayer.inJail && !turnActive =>
+              payJailFineUseCase.execute(gameId) match {
+                case Right(_) =>
+                  println("✅ Jail fine paid.")
+                case Left(error) =>
+                  println(s"❌ $error")
+              }
+
             case "e" | "end" if turnActive || game.currentPlayer.isBankrupt =>
               endTurnUseCase.execute(gameId)
               turnActive = false
@@ -140,5 +197,18 @@ class ConsoleGameController(
               println("❌ Invalid command")
           }
       }
+  }
+
+  private def promptBidderId(game: Game): PlayerId = {
+    println("Enter bidder id:")
+    game.players.filterNot(_.isBankrupt).foreach { p =>
+      println(s"  ${p.id.value}: ${p.name} ($$${p.balance.amount})")
+    }
+    PlayerId(scala.io.StdIn.readLine().trim)
+  }
+
+  private def readInt(prompt: String, defaultValue: Int): Int = {
+    println(prompt)
+    scala.io.StdIn.readLine().trim.toIntOption.getOrElse(defaultValue)
   }
 }

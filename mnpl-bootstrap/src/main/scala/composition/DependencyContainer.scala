@@ -2,7 +2,15 @@ package com.sokima.monopoly
 package composition
 
 import application.port.{BoardFactory, EventPublisher, GameRepository, PropertyRepository}
-import application.usecase.{BuyPropertyUseCase, CreateGameUseCase, EndTurnUseCase, RollDiceUseCase}
+import application.usecase.{
+  AuctionBidUseCase,
+  BuyPropertyUseCase,
+  CreateGameUseCase,
+  DeclinePropertyUseCase,
+  EndTurnUseCase,
+  PayJailFineUseCase,
+  RollDiceUseCase
+}
 import domain.Money
 import domain.service.*
 import infrastructure.adapter.cli.ConsoleGameController
@@ -16,7 +24,8 @@ object DependencyContainer {
   val gameConfig: GameConfig = GameConfig(
     startingBalance = Money(1500),
     goSalary = Money(200),
-    boardSize = 40
+    boardSize = 40,
+    deckSeed = 42L
   )
 
   // Factories
@@ -66,6 +75,25 @@ object DependencyContainer {
     eventPublisher
   )
 
+  val declinePropertyUseCase: DeclinePropertyUseCase = new DeclinePropertyUseCase(
+    gameRepository,
+    eventPublisher
+  )
+
+  val auctionBidUseCase: AuctionBidUseCase = new AuctionBidUseCase(
+    gameRepository,
+    propertyRepository,
+    paymentService,
+    eventPublisher
+  )
+
+  val payJailFineUseCase: PayJailFineUseCase = new PayJailFineUseCase(
+    gameRepository,
+    propertyRepository,
+    paymentService,
+    eventPublisher
+  )
+
   val endTurnUseCase: EndTurnUseCase = new EndTurnUseCase(
     gameRepository,
     eventPublisher
@@ -76,6 +104,9 @@ object DependencyContainer {
     createGameUseCase,
     rollDiceUseCase,
     buyPropertyUseCase,
+    declinePropertyUseCase,
+    auctionBidUseCase,
+    payJailFineUseCase,
     endTurnUseCase,
     gameRepository
   )

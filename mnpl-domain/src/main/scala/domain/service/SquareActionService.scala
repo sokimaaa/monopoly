@@ -24,6 +24,8 @@ class SquareActionService(propertyService: PropertyService) {
         val tax = Money((game.currentPlayer.balance.amount * percent) / 100)
         SquareAction.PayTaxAction(tax)
       case Square.GoToJail(_)    => SquareAction.GoToJailAction
+      case Square.Chance(_)      => SquareAction.DrawChance
+      case Square.CommunityChest(_) => SquareAction.DrawCommunityChest
       case _                     => SquareAction.NoAction
     }
 }
