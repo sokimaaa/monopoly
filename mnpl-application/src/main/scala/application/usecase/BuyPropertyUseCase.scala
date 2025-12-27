@@ -15,7 +15,6 @@ class BuyPropertyUseCase(
   def execute(gameId: GameId): Either[String, (Game, Property, GameEvent.PropertyPurchased)] = {
     for {
       game <- gameRepository.findById(gameId).toRight("Game not found")
-      _ <- Either.cond(game.rules.allowPropertyPurchases, (), "Property purchases are disabled in this game")
       player = game.currentPlayer
 
       square <- game.board.getSquare(player.position).toRight("Invalid position")

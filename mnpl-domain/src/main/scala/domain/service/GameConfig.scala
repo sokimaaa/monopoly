@@ -1,12 +1,10 @@
 package com.sokima.monopoly
 package domain.service
 
-import domain.{GameRules, Money}
+import domain.Money
 
-case class GameConfig
-(
+case class GameConfig(
   startingBalance: Money = Money(1500),
   goSalary: Money = Money(200),
-  boardSize: Int = 40,
-  rules: GameRules = GameRules.MoveOnly
+  boardSize: Int = 40
 )

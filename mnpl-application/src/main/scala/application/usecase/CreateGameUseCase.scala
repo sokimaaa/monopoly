@@ -33,8 +33,7 @@ class CreateGameUseCase(
         id = gameId,
         board = board,
         players = players,
-        currentPlayerIndex = 0,
-        rules = config.rules
+        currentPlayerIndex = 0
       )
 
       gameRepository.save(game)

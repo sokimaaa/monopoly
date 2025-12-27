@@ -8,7 +8,6 @@ case class Game(
                  board: Board,
                  players: List[Player],
                  currentPlayerIndex: Int,
-                 rules: GameRules,
                  status: GameStatus = GameStatus.Running,
                  turnState: TurnState = TurnState()
                ) {
