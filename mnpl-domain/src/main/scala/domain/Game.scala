@@ -22,6 +22,20 @@ case class Game(
     copy(players = updatedPlayers)
   }
 
+  def updateProperty(property: Property): Game =
+    copy(board = board.updateProperty(property))
+
+  def markPlayerBankrupt(playerId: PlayerId): (Game, List[Property]) =
+    players.find(_.id == playerId) match {
+      case None => (this, Nil)
+      case Some(player) =>
+        val propertyIds = player.ownedProperties
+        val (updatedBoard, releasedProperties) = board.releaseProperties(propertyIds)
+        val updatedPlayer = player.clearProperties.markBankrupt
+        val updatedPlayers = players.map(p => if (p.id == playerId) updatedPlayer else p)
+        (copy(players = updatedPlayers, board = updatedBoard), releasedProperties)
+    }
+
   def advanceTurn: Game = copy(currentPlayerIndex = nextPlayerIndex).resetTurnState
 
   def advanceTurnSkippingBankrupt: Game =
