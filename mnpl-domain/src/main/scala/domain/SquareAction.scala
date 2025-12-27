@@ -13,4 +13,8 @@ object SquareAction {
   case class PayTaxAction(amount: Money) extends SquareAction
 
   case object GoToJailAction extends SquareAction
+
+  case object DrawChance extends SquareAction
+
+  case object DrawCommunityChest extends SquareAction
 }

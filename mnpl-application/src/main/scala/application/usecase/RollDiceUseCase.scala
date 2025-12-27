@@ -55,7 +55,7 @@ class RollDiceUseCase(
       val gameAfterMove = gameAfterRoll.updatePlayer(movedPlayer)
       for {
         square <- gameAfterMove.board.getSquare(movedPlayer.position).toRight("Invalid position")
-        result <- handleSquareAction(gameAfterMove, square, roll, moveEvent)
+        result <- handleSquareAction(gameAfterMove, square, roll, moveEvent, depth = 0)
       } yield result
     }
   }
@@ -72,7 +72,7 @@ class RollDiceUseCase(
         .updatePlayer(movedPlayer)
       for {
         square <- gameAfterMove.board.getSquare(movedPlayer.position).toRight("Invalid position")
-        result <- handleSquareAction(gameAfterMove, square, roll, moveEvent)
+        result <- handleSquareAction(gameAfterMove, square, roll, moveEvent, depth = 0)
       } yield result
     } else {
       val attemptedPlayer = player.recordJailAttempt
@@ -92,7 +92,7 @@ class RollDiceUseCase(
               val gameAfterMove = result.game.updatePlayer(movedPlayer)
               for {
                 square <- gameAfterMove.board.getSquare(movedPlayer.position).toRight("Invalid position")
-                actionResult <- handleSquareAction(gameAfterMove, square, roll, moveEvent)
+                actionResult <- handleSquareAction(gameAfterMove, square, roll, moveEvent, depth = 0)
               } yield actionResult.copy(
                 events = actionResult.events ++ result.events,
                 releasedProperties = actionResult.releasedProperties ++ result.releasedProperties
@@ -114,7 +114,8 @@ class RollDiceUseCase(
       game: Game,
       square: Square,
       roll: DiceRoll,
-      moveEvent: GameEvent.PlayerMoved
+      moveEvent: GameEvent.PlayerMoved,
+      depth: Int
   ): Either[String, ActionResult] =
     squareActionService.determineAction(square, game) match {
       case SquareAction.NoAction =>
@@ -157,9 +158,87 @@ class RollDiceUseCase(
         sendToJail(game.copy(turnState = game.turnState.copy(extraRoll = false)), roll)
           .map(result => result.copy(events = List(moveEvent)))
 
+      case SquareAction.DrawChance =>
+        handleCardDraw(game, game.chanceDeck, DeckType.Chance, roll, moveEvent, depth)
+
+      case SquareAction.DrawCommunityChest =>
+        handleCardDraw(game, game.communityDeck, DeckType.Community, roll, moveEvent, depth)
+
       case _ =>
         Right(ActionResult(game, List(moveEvent), Nil, roll))
     }
+
+  private def handleCardDraw(
+      game: Game,
+      deck: Deck,
+      deckType: DeckType,
+      roll: DiceRoll,
+      moveEvent: GameEvent.PlayerMoved,
+      depth: Int
+  ): Either[String, ActionResult] = {
+    val (card, updatedDeck) = deck.draw()
+    val deckUpdatedGame = deckType match {
+      case DeckType.Chance    => game.updateChanceDeck(updatedDeck)
+      case DeckType.Community => game.updateCommunityDeck(updatedDeck)
+    }
+    applyCard(deckUpdatedGame, card, roll, moveEvent, depth = depth + 1)
+  }
+
+  private def applyCard(
+      game: Game,
+      card: Card,
+      roll: DiceRoll,
+      moveEvent: GameEvent.PlayerMoved,
+      depth: Int
+  ): Either[String, ActionResult] = {
+    if (depth > 5) {
+      Right(ActionResult(game, List(moveEvent), Nil, roll))
+    } else
+      card match {
+        case Card.Gain(amount) =>
+          val player = game.currentPlayer.receive(amount)
+          val updatedGame = game.updatePlayer(player)
+          Right(ActionResult(updatedGame, List(moveEvent), Nil, roll))
+
+        case Card.Pay(amount) =>
+          val player = game.currentPlayer
+          val payment = paymentService.pay(game, player.id, Payee.Bank, amount)
+          payment.map { result =>
+            val updatedGame = disableExtraRollIfBankrupt(result.game, player.id)
+            ActionResult(updatedGame, moveEvent :: result.events, result.releasedProperties, roll)
+          }
+
+        case Card.MoveTo(position, awardGo) =>
+          val (movedPlayer, movedEvent) =
+            movementService.movePlayerTo(game.currentPlayer, position, game.board, awardGo)
+          val updatedGame = game.updatePlayer(movedPlayer)
+          for {
+            square <- updatedGame.board.getSquare(movedPlayer.position).toRight("Invalid position")
+            next <- handleSquareAction(updatedGame, square, roll, movedEvent, depth)
+          } yield next
+
+        case Card.MoveBack(steps) =>
+          val (movedPlayer, movedEvent) =
+            movementService.movePlayerBack(game.currentPlayer, steps, game.board)
+          val updatedGame = game.updatePlayer(movedPlayer)
+          for {
+            square <- updatedGame.board.getSquare(movedPlayer.position).toRight("Invalid position")
+            next <- handleSquareAction(updatedGame, square, roll, movedEvent, depth)
+          } yield next
+
+        case Card.GoToJail =>
+          sendToJail(game.copy(turnState = game.turnState.copy(extraRoll = false)), roll)
+            .map(result => result.copy(events = List(moveEvent)))
+
+        case Card.GetOutOfJailFree =>
+          val updatedPlayer = game.currentPlayer.receiveGetOutOfJailFree
+          val updatedGame   = game.updatePlayer(updatedPlayer)
+          Right(ActionResult(updatedGame, List(moveEvent), Nil, roll))
+
+        case Card.Repairs(_, _) =>
+          Right(ActionResult(game, List(moveEvent), Nil, roll))
+      }
+  }
 
   private def sendToJail(game: Game, roll: DiceRoll): Either[String, ActionResult] =
     for {
@@ -190,4 +269,10 @@ class RollDiceUseCase(
       releasedProperties: List[Property],
       roll: DiceRoll
   )
+
+  private sealed trait DeckType
+  private object DeckType {
+    case object Chance extends DeckType
+    case object Community extends DeckType
+  }
 }

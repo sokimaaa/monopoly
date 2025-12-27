@@ -8,6 +8,9 @@ case class Game(
     board: Board,
     players: List[Player],
     currentPlayerIndex: Int,
+    chanceDeck: Deck,
+    communityDeck: Deck,
+    auction: Option[Auction] = None,
     status: GameStatus = GameStatus.Running,
     turnState: TurnState = TurnState()
 ) {
@@ -24,6 +27,16 @@ case class Game(
 
   def updateProperty(property: Property): Game =
     copy(board = board.updateProperty(property))
+
+  def updateChanceDeck(deck: Deck): Game = copy(chanceDeck = deck)
+
+  def updateCommunityDeck(deck: Deck): Game = copy(communityDeck = deck)
+
+  def startAuction(propertyId: PropertyId, bidders: Set[PlayerId]): Either[String, Game] =
+    if (auction.isDefined) Left("Auction already in progress")
+    else Right(copy(auction = Some(Auction(propertyId, bidders))))
+
+  def clearAuction: Game = copy(auction = None)
 
   def markPlayerBankrupt(playerId: PlayerId): (Game, List[Property]) =
     players.find(_.id == playerId) match {

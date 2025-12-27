@@ -8,10 +8,10 @@ In case, I am asked to implement a new business feature, you will follow the ste
   - If yes then extend it gracefully, following existing patterns.
   - If no then implement new code in domain and application layers.
 - Implement next iteration of functionality. 
-- Create checklist of what were implemented before (green) and what was implemented by you in current iteration (red). 
+- Create checklist of what were implemented before (bullet point with green label) and what was implemented by you in current iteration (bullet point with red label). 
 - If feature already exist - don't need to make changes. 
 - The code must follow acceptance criteria (if it already fits much more - no need to write disabling logic, integrate it in current iteration).
-- If you need to add dependencies do it on bootstrap layer, it is allowed if new dependencies appear.
+- If were added new classes or updated dependencies in old ones, you need to add dependencies respectively on bootstrap layer.
 - Avoid making changes on infrastructure layers, unless it is strictly necessary for feature implementation. Additionally explain what you did and show as black in final checklist.
 
 ## Project Structure & Module Organization
