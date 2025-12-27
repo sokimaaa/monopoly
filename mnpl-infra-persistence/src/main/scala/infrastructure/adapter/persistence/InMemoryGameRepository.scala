@@ -16,14 +16,13 @@ class InMemoryGameRepository extends GameRepository {
 
   def findById(gameId: GameId): Option[Game] = storage.get(gameId)
 
-  def update(game: Game): Either[String, Game] = {
+  def update(game: Game): Either[String, Game] =
     if (storage.contains(game.id)) {
       storage.update(game.id, game)
       Right(game)
     } else {
       Left("Game not found")
     }
-  }
 
   def delete(gameId: GameId): Unit = storage.remove(gameId)
 }

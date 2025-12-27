@@ -24,6 +24,6 @@ case class Position(value: Int) extends AnyVal {
 case class PropertyId(value: String) extends AnyVal
 
 case class DiceRoll(die1: Int, die2: Int) {
-  def total: Int = die1 + die2
+  def total: Int         = die1 + die2
   def isDoubles: Boolean = die1 == die2
 }

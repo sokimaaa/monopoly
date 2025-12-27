@@ -2,14 +2,14 @@ package com.sokima.monopoly
 package domain
 
 case class Player(
-                   id: PlayerId,
-                   name: String,
-                   position: Position,
-                   balance: Money,
-                   ownedProperties: Set[PropertyId],
-                   inJail: Boolean = false,
-                   jailTurns: Int = 0
-                 ) {
+    id: PlayerId,
+    name: String,
+    position: Position,
+    balance: Money,
+    ownedProperties: Set[PropertyId],
+    inJail: Boolean = false,
+    jailTurns: Int = 0
+) {
   def isBankrupt: Boolean = balance.amount < 0
 
   def canAfford(price: Money): Boolean = balance >= price

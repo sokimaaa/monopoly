@@ -7,7 +7,7 @@ import application.port.PropertyRepository
 import scala.collection.mutable
 
 class InMemoryPropertyRepository(initialProperties: Map[PropertyId, Property])
-  extends PropertyRepository {
+    extends PropertyRepository {
 
   private val storage = mutable.Map[PropertyId, Property](initialProperties.toSeq: _*)
 

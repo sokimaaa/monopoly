@@ -6,12 +6,12 @@ import application.usecase.*
 import domain.{Game, GameId, Square}
 
 class ConsoleGameController(
-                             createGameUseCase: CreateGameUseCase,
-                             rollDiceUseCase: RollDiceUseCase,
-                             buyPropertyUseCase: BuyPropertyUseCase,
-                             endTurnUseCase: EndTurnUseCase,
-                             gameRepository: GameRepository
-                           ) {
+    createGameUseCase: CreateGameUseCase,
+    rollDiceUseCase: RollDiceUseCase,
+    buyPropertyUseCase: BuyPropertyUseCase,
+    endTurnUseCase: EndTurnUseCase,
+    gameRepository: GameRepository
+) {
 
   def displayWelcome(): Unit = {
     println("=" * 50)
@@ -41,7 +41,7 @@ class ConsoleGameController(
     println("-" * 50)
   }
 
-  def displaySquareInfo(game: Game): Unit = {
+  def displaySquareInfo(game: Game): Unit =
     game.board.getSquare(game.currentPlayer.position).foreach {
       case Square.PropertySquare(prop) =>
         println(s"\n📍 ${prop.name}")
@@ -52,20 +52,21 @@ class ConsoleGameController(
             val owner = game.players.find(_.id == ownerId).get
             println(s"   👤 Owner: ${owner.name} | Rent: $$${prop.rent.amount}")
         }
-      case Square.Go(_) => println("\n📍 GO")
-      case Square.Jail(_) => println("\n📍 Jail (Just Visiting)")
+      case Square.Go(_)          => println("\n📍 GO")
+      case Square.Jail(_)        => println("\n📍 Jail (Just Visiting)")
       case Square.FreeParking(_) => println("\n📍 Free Parking")
-      case Square.Tax(_, amt) => println(s"\n📍 Tax ($$${amt.amount})")
-      case _ => println("\n📍 Special Square")
+      case Square.Tax(_, amt)    => println(s"\n📍 Tax ($$${amt.amount})")
+      case _                     => println("\n📍 Special Square")
     }
-  }
 
   def displayAllPlayers(game: Game): Unit = {
     println("\n=== PLAYERS ===")
     game.players.foreach { p =>
       val indicator = if (p.id == game.currentPlayer.id) ">>>" else "   "
-      val status = if (p.isBankrupt) "[BANKRUPT]" else ""
-      println(s"$indicator ${p.name}: $$${p.balance.amount} | Props: ${p.ownedProperties.size} $status")
+      val status    = if (p.isBankrupt) "[BANKRUPT]" else ""
+      println(
+        s"$indicator ${p.name}: $$${p.balance.amount} | Props: ${p.ownedProperties.size} $status"
+      )
     }
     println()
   }
@@ -77,10 +78,10 @@ class ConsoleGameController(
   }
 
   def gameLoop(gameId: GameId): Unit = {
-    var running = true
+    var running    = true
     var turnActive = false
 
-    while (running) {
+    while (running)
       gameRepository.findById(gameId) match {
         case None =>
           println("Game not found!")
@@ -139,6 +140,5 @@ class ConsoleGameController(
               println("❌ Invalid command")
           }
       }
-    }
   }
 }

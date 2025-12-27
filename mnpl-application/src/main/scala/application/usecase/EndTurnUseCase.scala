@@ -6,11 +6,11 @@ import domain.service.GameEvent
 import domain.{Game, GameId}
 
 class EndTurnUseCase(
-                      gameRepository: GameRepository,
-                      eventPublisher: EventPublisher
-                    ) {
+    gameRepository: GameRepository,
+    eventPublisher: EventPublisher
+) {
 
-  def execute(gameId: GameId): Either[String, Game] = {
+  def execute(gameId: GameId): Either[String, Game] =
     for {
       game <- gameRepository.findById(gameId).toRight("Game not found")
       nextGame = game
@@ -25,5 +25,4 @@ class EndTurnUseCase(
       }
       nextGame
     }
-  }
 }

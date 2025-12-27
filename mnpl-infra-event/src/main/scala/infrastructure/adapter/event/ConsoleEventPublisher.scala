@@ -5,7 +5,7 @@ import application.port.EventPublisher
 import domain.service.GameEvent
 
 class ConsoleEventPublisher extends EventPublisher {
-  def publish(event: GameEvent): Unit = {
+  def publish(event: GameEvent): Unit =
     event match {
       case GameEvent.PlayerMoved(_, _, to, passedGo) =>
         if (passedGo) println("💰 Passed GO! Collected salary")
@@ -25,5 +25,4 @@ class ConsoleEventPublisher extends EventPublisher {
 
       case _ => ()
     }
-  }
 }
