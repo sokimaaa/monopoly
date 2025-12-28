@@ -14,7 +14,7 @@ object DeckFactory {
         Card.Pay(Money(15)),
         Card.GoToJail,
         Card.GetOutOfJailFree,
-        Card.Repairs(Money(0), Money(0))
+        Card.Repairs(Money(25), Money(100))
       ),
       seed
     )
@@ -29,7 +29,7 @@ object DeckFactory {
         Card.GoToJail,
         Card.GetOutOfJailFree,
         Card.MoveTo(Position(0), awardGo = true),
-        Card.Repairs(Money(0), Money(0))
+        Card.Repairs(Money(40), Money(115))
       ),
       seed + 1
     )

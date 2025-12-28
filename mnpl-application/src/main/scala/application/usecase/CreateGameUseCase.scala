@@ -35,7 +35,8 @@ class CreateGameUseCase(
         players = players,
         currentPlayerIndex = 0,
         chanceDeck = DeckFactory.chanceDeck(config.deckSeed),
-        communityDeck = DeckFactory.communityDeck(config.deckSeed)
+        communityDeck = DeckFactory.communityDeck(config.deckSeed),
+        bank = Bank(config.bankHouses, config.bankHotels)
       )
 
       gameRepository.save(game)

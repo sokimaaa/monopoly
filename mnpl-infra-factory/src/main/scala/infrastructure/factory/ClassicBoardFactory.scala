@@ -54,233 +54,255 @@ class ClassicBoardFactory extends application.port.BoardFactory {
     Board(squares)
   }
 
-  private def createClassicProperties(): Vector[Property] =
+  private def createClassicProperties(): Vector[Property] = {
+    def street(
+        id: String,
+        name: String,
+        position: Int,
+        price: Int,
+        rents: StreetRentTable,
+        houseCost: Int,
+        group: ColorGroup
+    ): Property =
+      Property(
+        PropertyId(id),
+        name,
+        Position(position),
+        Money(price),
+        rents.base,
+        PropertyType.Street,
+        colorGroup = Some(group),
+        rentTable = Some(rents),
+        houseCost = Some(Money(houseCost))
+      )
+
+    def railroad(id: String, name: String, position: Int): Property =
+      Property(
+        PropertyId(id),
+        name,
+        Position(position),
+        Money(200),
+        Money(25),
+        PropertyType.Railroad
+      )
+
+    def utility(id: String, name: String, position: Int): Property =
+      Property(
+        PropertyId(id),
+        name,
+        Position(position),
+        Money(150),
+        Money(15),
+        PropertyType.Utility
+      )
+
     Vector(
-      Property(
-        PropertyId("med_ave"),
+      street(
+        "med_ave",
         "Mediterranean Avenue",
-        Position(1),
-        Money(60),
-        Money(2),
-        PropertyType.Street
+        1,
+        60,
+        StreetRentTable(Money(2), Money(10), Money(30), Money(90), Money(160), Money(250)),
+        50,
+        ColorGroup.Brown
       ),
-      Property(
-        PropertyId("baltic_ave"),
+      street(
+        "baltic_ave",
         "Baltic Avenue",
-        Position(3),
-        Money(60),
-        Money(4),
-        PropertyType.Street
+        3,
+        60,
+        StreetRentTable(Money(4), Money(20), Money(60), Money(180), Money(320), Money(450)),
+        50,
+        ColorGroup.Brown
       ),
-      Property(
-        PropertyId("reading_rr"),
-        "Reading Railroad",
-        Position(5),
-        Money(200),
-        Money(25),
-        PropertyType.Railroad
-      ),
-      Property(
-        PropertyId("oriental_ave"),
+      railroad("reading_rr", "Reading Railroad", 5),
+      street(
+        "oriental_ave",
         "Oriental Avenue",
-        Position(6),
-        Money(100),
-        Money(6),
-        PropertyType.Street
+        6,
+        100,
+        StreetRentTable(Money(6), Money(30), Money(90), Money(270), Money(400), Money(550)),
+        50,
+        ColorGroup.LightBlue
       ),
-      Property(
-        PropertyId("vermont_ave"),
+      street(
+        "vermont_ave",
         "Vermont Avenue",
-        Position(8),
-        Money(100),
-        Money(6),
-        PropertyType.Street
+        8,
+        100,
+        StreetRentTable(Money(6), Money(30), Money(90), Money(270), Money(400), Money(550)),
+        50,
+        ColorGroup.LightBlue
       ),
-      Property(
-        PropertyId("conn_ave"),
+      street(
+        "conn_ave",
         "Connecticut Avenue",
-        Position(9),
-        Money(120),
-        Money(8),
-        PropertyType.Street
+        9,
+        120,
+        StreetRentTable(Money(8), Money(40), Money(100), Money(300), Money(450), Money(600)),
+        50,
+        ColorGroup.LightBlue
       ),
-      Property(
-        PropertyId("stcharles_pl"),
+      street(
+        "stcharles_pl",
         "St. Charles Place",
-        Position(11),
-        Money(140),
-        Money(10),
-        PropertyType.Street
+        11,
+        140,
+        StreetRentTable(Money(10), Money(50), Money(150), Money(450), Money(625), Money(750)),
+        100,
+        ColorGroup.Pink
       ),
-      Property(
-        PropertyId("electric_co"),
-        "Electric Company",
-        Position(12),
-        Money(150),
-        Money(15),
-        PropertyType.Utility
-      ),
-      Property(
-        PropertyId("states_ave"),
+      utility("electric_co", "Electric Company", 12),
+      street(
+        "states_ave",
         "States Avenue",
-        Position(13),
-        Money(140),
-        Money(10),
-        PropertyType.Street
+        13,
+        140,
+        StreetRentTable(Money(10), Money(50), Money(150), Money(450), Money(625), Money(750)),
+        100,
+        ColorGroup.Pink
       ),
-      Property(
-        PropertyId("virginia_ave"),
+      street(
+        "virginia_ave",
         "Virginia Avenue",
-        Position(14),
-        Money(160),
-        Money(12),
-        PropertyType.Street
+        14,
+        160,
+        StreetRentTable(Money(12), Money(60), Money(180), Money(500), Money(700), Money(900)),
+        100,
+        ColorGroup.Pink
       ),
-      Property(
-        PropertyId("penn_rr"),
-        "Pennsylvania Railroad",
-        Position(15),
-        Money(200),
-        Money(25),
-        PropertyType.Railroad
-      ),
-      Property(
-        PropertyId("stjames_pl"),
+      railroad("penn_rr", "Pennsylvania Railroad", 15),
+      street(
+        "stjames_pl",
         "St. James Place",
-        Position(16),
-        Money(180),
-        Money(14),
-        PropertyType.Street
+        16,
+        180,
+        StreetRentTable(Money(14), Money(70), Money(200), Money(550), Money(750), Money(950)),
+        100,
+        ColorGroup.Orange
       ),
-      Property(
-        PropertyId("tennessee_ave"),
+      street(
+        "tennessee_ave",
         "Tennessee Avenue",
-        Position(18),
-        Money(180),
-        Money(14),
-        PropertyType.Street
+        18,
+        180,
+        StreetRentTable(Money(14), Money(70), Money(200), Money(550), Money(750), Money(950)),
+        100,
+        ColorGroup.Orange
       ),
-      Property(
-        PropertyId("newyork_ave"),
+      street(
+        "newyork_ave",
         "New York Avenue",
-        Position(19),
-        Money(200),
-        Money(16),
-        PropertyType.Street
+        19,
+        200,
+        StreetRentTable(Money(16), Money(80), Money(220), Money(600), Money(800), Money(1000)),
+        100,
+        ColorGroup.Orange
       ),
-      Property(
-        PropertyId("kentucky_ave"),
+      street(
+        "kentucky_ave",
         "Kentucky Avenue",
-        Position(21),
-        Money(220),
-        Money(18),
-        PropertyType.Street
+        21,
+        220,
+        StreetRentTable(Money(18), Money(90), Money(250), Money(700), Money(875), Money(1050)),
+        150,
+        ColorGroup.Red
       ),
-      Property(
-        PropertyId("indiana_ave"),
+      street(
+        "indiana_ave",
         "Indiana Avenue",
-        Position(23),
-        Money(220),
-        Money(18),
-        PropertyType.Street
+        23,
+        220,
+        StreetRentTable(Money(18), Money(90), Money(250), Money(700), Money(875), Money(1050)),
+        150,
+        ColorGroup.Red
       ),
-      Property(
-        PropertyId("illinois_ave"),
+      street(
+        "illinois_ave",
         "Illinois Avenue",
-        Position(24),
-        Money(240),
-        Money(20),
-        PropertyType.Street
+        24,
+        240,
+        StreetRentTable(Money(20), Money(100), Money(300), Money(750), Money(925), Money(1100)),
+        150,
+        ColorGroup.Red
       ),
-      Property(
-        PropertyId("bo_rr"),
-        "B&O Railroad",
-        Position(25),
-        Money(200),
-        Money(25),
-        PropertyType.Railroad
-      ),
-      Property(
-        PropertyId("atlantic_ave"),
+      railroad("bo_rr", "B&O Railroad", 25),
+      street(
+        "atlantic_ave",
         "Atlantic Avenue",
-        Position(26),
-        Money(260),
-        Money(22),
-        PropertyType.Street
+        26,
+        260,
+        StreetRentTable(Money(22), Money(110), Money(330), Money(800), Money(975), Money(1150)),
+        150,
+        ColorGroup.Yellow
       ),
-      Property(
-        PropertyId("ventnor_ave"),
+      street(
+        "ventnor_ave",
         "Ventnor Avenue",
-        Position(27),
-        Money(260),
-        Money(22),
-        PropertyType.Street
+        27,
+        260,
+        StreetRentTable(Money(22), Money(110), Money(330), Money(800), Money(975), Money(1150)),
+        150,
+        ColorGroup.Yellow
       ),
-      Property(
-        PropertyId("water_works"),
-        "Water Works",
-        Position(28),
-        Money(150),
-        Money(15),
-        PropertyType.Utility
-      ),
-      Property(
-        PropertyId("marvin_gdns"),
+      utility("water_works", "Water Works", 28),
+      street(
+        "marvin_gdns",
         "Marvin Gardens",
-        Position(29),
-        Money(280),
-        Money(24),
-        PropertyType.Street
+        29,
+        280,
+        StreetRentTable(Money(24), Money(120), Money(360), Money(850), Money(1025), Money(1200)),
+        150,
+        ColorGroup.Yellow
       ),
-      Property(
-        PropertyId("pacific_ave"),
+      street(
+        "pacific_ave",
         "Pacific Avenue",
-        Position(31),
-        Money(300),
-        Money(26),
-        PropertyType.Street
+        31,
+        300,
+        StreetRentTable(Money(26), Money(130), Money(390), Money(900), Money(1100), Money(1275)),
+        200,
+        ColorGroup.Green
       ),
-      Property(
-        PropertyId("nc_ave"),
+      street(
+        "nc_ave",
         "North Carolina Avenue",
-        Position(32),
-        Money(300),
-        Money(26),
-        PropertyType.Street
+        32,
+        300,
+        StreetRentTable(Money(26), Money(130), Money(390), Money(900), Money(1100), Money(1275)),
+        200,
+        ColorGroup.Green
       ),
-      Property(
-        PropertyId("penn_ave"),
+      street(
+        "penn_ave",
         "Pennsylvania Avenue",
-        Position(34),
-        Money(320),
-        Money(28),
-        PropertyType.Street
+        34,
+        320,
+        StreetRentTable(Money(28), Money(150), Money(450), Money(1000), Money(1200), Money(1400)),
+        200,
+        ColorGroup.Green
       ),
-      Property(
-        PropertyId("shortline_rr"),
-        "Short Line",
-        Position(35),
-        Money(200),
-        Money(25),
-        PropertyType.Railroad
-      ),
-      Property(
-        PropertyId("park_pl"),
+      railroad("shortline_rr", "Short Line", 35),
+      street(
+        "park_pl",
         "Park Place",
-        Position(37),
-        Money(350),
-        Money(35),
-        PropertyType.Street
+        37,
+        350,
+        StreetRentTable(Money(35), Money(175), Money(500), Money(1100), Money(1300), Money(1500)),
+        200,
+        ColorGroup.DarkBlue
       ),
-      Property(
-        PropertyId("boardwalk"),
+      street(
+        "boardwalk",
         "Boardwalk",
-        Position(39),
-        Money(400),
-        Money(50),
-        PropertyType.Street
+        39,
+        400,
+        StreetRentTable(Money(50), Money(200), Money(600), Money(1400), Money(1700), Money(2000)),
+        200,
+        ColorGroup.DarkBlue
       )
     )
+  }
 
   def extractProperties(board: Board): Map[PropertyId, Property] =
     board.squares.collect {

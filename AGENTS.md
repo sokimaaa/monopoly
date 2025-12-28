@@ -1,18 +1,25 @@
 # Repository Guidelines
 
+## Code review guidelines
+
+## Infrastructure feature implementation
+
 ## Business feature implementation
 
 In case, I am asked to implement a new business feature, you will follow the steps below:
-- Work on domain and application layers only.
-- Analyze if we need to extend existing code : 
-  - If yes then extend it gracefully, following existing patterns.
-  - If no then implement new code in domain and application layers.
-- Implement next iteration of functionality. 
-- Create checklist of what were implemented before (bullet point with green label) and what was implemented by you in current iteration (bullet point with red label). 
+- Create checklist of: 
+  - what were implemented before (mark with ✅) 
+  - what would be implemented by you in current iteration (mark with ✏️)
+  - If current implementation requires changes on infrastructure/bootstrap layers - explain it needs and mark it with ⚠️️.
+- Main work should be done on domain and application layers
+- Analyze from `Single Responsibility Principle` perspective : 
+  - If business task treats as completely new use-case - implement new code and inject it gracefully into existing codebase.
+  - If business task treats as part of existing use-case - gracefully extend it, following existing patterns.
+- In case new classes were introduced analyze from `Hexagonal Architecture` perspective :
+  - new entity is domain entity/value object, or domain service, or port, or use case
+- Implement next iteration of functionality takin into account : DRY, KISS, YAGNI principles.
 - If feature already exist - don't need to make changes. 
-- The code must follow acceptance criteria (if it already fits much more - no need to write disabling logic, integrate it in current iteration).
 - If were added new classes or updated dependencies in old ones, you need to add dependencies respectively on bootstrap layer.
-- Avoid making changes on infrastructure layers, unless it is strictly necessary for feature implementation. Additionally explain what you did and show as black in final checklist.
 
 ## Project Structure & Module Organization
 - Multi-module sbt build. Each module is in `mnpl-*` with Scala sources under `src/main/scala`.
