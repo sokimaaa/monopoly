@@ -1,5 +1,8 @@
+import sbt.sbtSlashSyntaxRichScope
+
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.3.7"
+Global / excludeLintKeys += idePackagePrefix
 
 lazy val commonSettings = Seq(
   idePackagePrefix := Some("com.sokima.monopoly")
