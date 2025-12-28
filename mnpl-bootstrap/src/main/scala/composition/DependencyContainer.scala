@@ -9,6 +9,7 @@ import application.usecase.{
   DeclinePropertyUseCase,
   EndTurnUseCase,
   PayJailFineUseCase,
+  PropertyImprovementUseCase,
   RollDiceUseCase
 }
 import domain.Money
@@ -47,7 +48,7 @@ object DependencyContainer {
   val diceRoller: DiceRoller                   = new RandomDiceRoller()
   val movementService: MovementService         = new MovementService(gameConfig)
   val propertyService: PropertyService         = new PropertyService()
-  val paymentService: PaymentService           = new PaymentService()
+  val paymentService: PaymentService           = new PaymentService(propertyService)
   val squareActionService: SquareActionService = new SquareActionService(propertyService)
 
   // Use Cases
@@ -63,6 +64,7 @@ object DependencyContainer {
     propertyRepository,
     movementService,
     squareActionService,
+    propertyService,
     diceRoller,
     eventPublisher,
     paymentService
@@ -97,6 +99,12 @@ object DependencyContainer {
   val endTurnUseCase: EndTurnUseCase = new EndTurnUseCase(
     gameRepository,
     eventPublisher
+  )
+
+  val propertyImprovementUseCase: PropertyImprovementUseCase = new PropertyImprovementUseCase(
+    gameRepository,
+    propertyRepository,
+    propertyService
   )
 
   // Presentation Layer

@@ -5,7 +5,7 @@ import domain.*
 
 class SquareActionService(propertyService: PropertyService) {
 
-  def determineAction(square: Square, game: Game): SquareAction =
+  def determineAction(square: Square, game: Game, roll: DiceRoll): SquareAction =
     square match {
       case Square.PropertySquare(property) =>
         property.ownerId match {
@@ -14,7 +14,12 @@ class SquareActionService(propertyService: PropertyService) {
           case Some(ownerId) =>
             game.players.find(_.id == ownerId) match {
               case Some(owner) if owner.isBankrupt => SquareAction.PropertyAvailable(property)
-              case Some(_)                         => SquareAction.PayRentAction(property, ownerId)
+              case Some(_) =>
+                propertyService.calculateRent(game, property, roll) match {
+                  case Right(amount) if amount.amount > 0 =>
+                    SquareAction.PayRentAction(property, ownerId, amount)
+                  case _ => SquareAction.NoAction
+                }
               case None                            => SquareAction.PropertyAvailable(property)
             }
         }

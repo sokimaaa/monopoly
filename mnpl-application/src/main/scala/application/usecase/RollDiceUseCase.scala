@@ -10,6 +10,7 @@ class RollDiceUseCase(
     propertyRepository: PropertyRepository,
     movementService: MovementService,
     squareActionService: SquareActionService,
+    propertyService: PropertyService,
     diceRoller: DiceRoller,
     eventPublisher: EventPublisher,
     paymentService: PaymentService
@@ -31,7 +32,7 @@ class RollDiceUseCase(
       } else {
         None
       }
-      _ <- updateProperties(result.releasedProperties)
+      _ <- updateProperties(result.updatedProperties)
       _ <- gameRepository.update(finalizedGame)
     } yield {
       val allEvents = result.events ++ finishEvent.toList
@@ -85,7 +86,15 @@ class RollDiceUseCase(
           val updatedPlayer = result.game.players.find(_.id == player.id)
           updatedPlayer match {
             case Some(p) if p.isBankrupt =>
-              Right(ActionResult(result.game, result.events, result.releasedProperties, roll))
+              Right(
+                ActionResult(
+                  result.game,
+                  result.events,
+                  result.releasedProperties,
+                  result.updatedProperties,
+                  roll
+                )
+              )
             case Some(p) =>
               val released = p.releaseFromJail
               val (movedPlayer, moveEvent) = movementService.movePlayer(released, roll, result.game.board)
@@ -95,7 +104,8 @@ class RollDiceUseCase(
                 actionResult <- handleSquareAction(gameAfterMove, square, roll, moveEvent, depth = 0)
               } yield actionResult.copy(
                 events = actionResult.events ++ result.events,
-                releasedProperties = actionResult.releasedProperties ++ result.releasedProperties
+                releasedProperties = actionResult.releasedProperties ++ result.releasedProperties,
+                updatedProperties = actionResult.updatedProperties ++ result.updatedProperties
               )
             case None =>
               Left("Player not found")
@@ -105,7 +115,7 @@ class RollDiceUseCase(
         val gameAfterAttempt = game
           .recordDiceRoll(roll, extraRoll = false)
           .updatePlayer(attemptedPlayer)
-        Right(ActionResult(gameAfterAttempt, Nil, Nil, roll))
+        Right(ActionResult(gameAfterAttempt, Nil, Nil, Nil, roll))
       }
     }
   }
@@ -117,25 +127,26 @@ class RollDiceUseCase(
       moveEvent: GameEvent.PlayerMoved,
       depth: Int
   ): Either[String, ActionResult] =
-    squareActionService.determineAction(square, game) match {
+    squareActionService.determineAction(square, game, roll) match {
       case SquareAction.NoAction =>
-        Right(ActionResult(game, List(moveEvent), Nil, roll))
+        Right(ActionResult(game, List(moveEvent), Nil, Nil, roll))
 
       case SquareAction.PropertyAvailable(property) =>
         val event = GameEvent.PropertyAvailable(game.currentPlayer.id, property.id, property.price)
-        Right(ActionResult(game, List(moveEvent, event), Nil, roll))
+        Right(ActionResult(game, List(moveEvent, event), Nil, Nil, roll))
 
-      case SquareAction.PayRentAction(property, landlordId) =>
+      case SquareAction.PayRentAction(property, landlordId, amount) =>
         val tenant   = game.currentPlayer
-        val payment = paymentService.pay(game, tenant.id, Payee.Player(landlordId), property.rent)
+        val payment = paymentService.pay(game, tenant.id, Payee.Player(landlordId), amount)
         payment.map { result =>
           val rentEvent =
-            GameEvent.RentPaid(tenant.id, landlordId, property.rent, property.name)
+            GameEvent.RentPaid(tenant.id, landlordId, amount, property.name)
           val updatedGame = disableExtraRollIfBankrupt(result.game, tenant.id)
           ActionResult(
             updatedGame,
             moveEvent :: (rentEvent :: result.events),
             result.releasedProperties,
+            result.updatedProperties,
             roll
           )
         }
@@ -150,6 +161,7 @@ class RollDiceUseCase(
             updatedGame,
             moveEvent :: (taxEvent :: result.events),
             result.releasedProperties,
+            result.updatedProperties,
             roll
           )
         }
@@ -163,9 +175,6 @@ class RollDiceUseCase(
 
       case SquareAction.DrawCommunityChest =>
         handleCardDraw(game, game.communityDeck, DeckType.Community, roll, moveEvent, depth)
-
-      case _ =>
-        Right(ActionResult(game, List(moveEvent), Nil, roll))
     }
 
   private def handleCardDraw(
@@ -192,20 +201,26 @@ class RollDiceUseCase(
       depth: Int
   ): Either[String, ActionResult] = {
     if (depth > 5) {
-      Right(ActionResult(game, List(moveEvent), Nil, roll))
+      Right(ActionResult(game, List(moveEvent), Nil, Nil, roll))
     } else
       card match {
         case Card.Gain(amount) =>
           val player = game.currentPlayer.receive(amount)
           val updatedGame = game.updatePlayer(player)
-          Right(ActionResult(updatedGame, List(moveEvent), Nil, roll))
+          Right(ActionResult(updatedGame, List(moveEvent), Nil, Nil, roll))
 
         case Card.Pay(amount) =>
           val player = game.currentPlayer
           val payment = paymentService.pay(game, player.id, Payee.Bank, amount)
           payment.map { result =>
             val updatedGame = disableExtraRollIfBankrupt(result.game, player.id)
-            ActionResult(updatedGame, moveEvent :: result.events, result.releasedProperties, roll)
+            ActionResult(
+              updatedGame,
+              moveEvent :: result.events,
+              result.releasedProperties,
+              result.updatedProperties,
+              roll
+            )
           }
 
         case Card.MoveTo(position, awardGo) =>
@@ -233,10 +248,31 @@ class RollDiceUseCase(
         case Card.GetOutOfJailFree =>
           val updatedPlayer = game.currentPlayer.receiveGetOutOfJailFree
           val updatedGame   = game.updatePlayer(updatedPlayer)
-          Right(ActionResult(updatedGame, List(moveEvent), Nil, roll))
+          Right(ActionResult(updatedGame, List(moveEvent), Nil, Nil, roll))
 
-        case Card.Repairs(_, _) =>
-          Right(ActionResult(game, List(moveEvent), Nil, roll))
+        case Card.Repairs(houseCost, hotelCost) =>
+          val player = game.currentPlayer
+          val properties = game.board.squares.collect {
+            case Square.PropertySquare(property) if property.ownerId.contains(player.id) =>
+              property
+          }
+          val (houses, hotels) = propertyService.countImprovements(properties.toList)
+          val amount = Money((houses * houseCost.amount) + (hotels * hotelCost.amount))
+          if (amount.amount == 0) {
+          Right(ActionResult(game, List(moveEvent), Nil, Nil, roll))
+          } else {
+            val payment = paymentService.pay(game, player.id, Payee.Bank, amount)
+            payment.map { result =>
+              val updatedGame = disableExtraRollIfBankrupt(result.game, player.id)
+              ActionResult(
+                updatedGame,
+                moveEvent :: result.events,
+                result.releasedProperties,
+                result.updatedProperties,
+                roll
+              )
+            }
+          }
       }
   }
 
@@ -248,7 +284,7 @@ class RollDiceUseCase(
       val updatedGame = game
         .updatePlayer(jailedPlayer)
         .copy(turnState = game.turnState.copy(extraRoll = false))
-      ActionResult(updatedGame, Nil, Nil, roll)
+      ActionResult(updatedGame, Nil, Nil, Nil, roll)
     }
 
   private def updateProperties(properties: List[Property]): Either[String, Unit] =
@@ -267,6 +303,7 @@ class RollDiceUseCase(
       game: Game,
       events: List[GameEvent],
       releasedProperties: List[Property],
+      updatedProperties: List[Property],
       roll: DiceRoll
   )
 

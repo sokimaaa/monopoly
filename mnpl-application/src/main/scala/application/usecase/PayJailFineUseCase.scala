@@ -25,7 +25,7 @@ class PayJailFineUseCase(
         case Some(player)                      => result.game.updatePlayer(player.releaseFromJail)
         case None                              => result.game
       }
-      _ <- updateProperties(result.releasedProperties)
+      _ <- updateProperties(result.updatedProperties)
       _ <- gameRepository.update(updatedGame)
     } yield {
       result.events.foreach(eventPublisher.publish)

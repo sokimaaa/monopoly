@@ -8,7 +8,8 @@ object SquareAction {
 
   case class PropertyAvailable(property: Property) extends SquareAction
 
-  case class PayRentAction(property: Property, landlordId: PlayerId) extends SquareAction
+  case class PayRentAction(property: Property, landlordId: PlayerId, amount: Money)
+      extends SquareAction
 
   case class PayTaxAction(amount: Money) extends SquareAction
 

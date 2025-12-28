@@ -10,6 +10,7 @@ case class Game(
     currentPlayerIndex: Int,
     chanceDeck: Deck,
     communityDeck: Deck,
+    bank: Bank,
     auction: Option[Auction] = None,
     status: GameStatus = GameStatus.Running,
     turnState: TurnState = TurnState()
@@ -43,10 +44,21 @@ case class Game(
       case None => (this, Nil)
       case Some(player) =>
         val propertyIds = player.ownedProperties
+        val ownedProperties = board.squares.collect {
+          case Square.PropertySquare(property) if propertyIds.contains(property.id) => property
+        }
+        val returnedHouses = ownedProperties.map(_.houses).sum
+        val returnedHotels = ownedProperties.count(_.hotel)
         val (updatedBoard, releasedProperties) = board.releaseProperties(propertyIds)
-        val updatedPlayer = player.clearProperties.markBankrupt
+        val updatedPlayer = player.clearProperties.markBankrupt.copy(getOutOfJailFree = 0)
         val updatedPlayers = players.map(p => if (p.id == playerId) updatedPlayer else p)
-        (copy(players = updatedPlayers, board = updatedBoard), releasedProperties)
+        val updatedBank = bank
+          .returnHouses(returnedHouses)
+          .returnHotels(returnedHotels)
+        (
+          copy(players = updatedPlayers, board = updatedBoard, bank = updatedBank),
+          releasedProperties
+        )
     }
 
   def transferPropertiesToCreditor(
@@ -59,24 +71,36 @@ case class Game(
       case (Some(debtor), Some(creditor)) =>
         val propertyIds = debtor.ownedProperties
         var transferred: List[Property] = Nil
+        val ownedProperties = board.squares.collect {
+          case Square.PropertySquare(property) if propertyIds.contains(property.id) => property
+        }
+        val returnedHouses = ownedProperties.map(_.houses).sum
+        val returnedHotels = ownedProperties.count(_.hotel)
         val updatedSquares = board.squares.map {
           case Square.PropertySquare(property) if propertyIds.contains(property.id) =>
-            val updated = property.assignOwner(creditorId)
+            val updated = property.clearImprovements.assignOwner(creditorId)
             transferred = updated :: transferred
             Square.PropertySquare(updated)
           case other => other
         }
         val updatedBoard = board.copy(squares = updatedSquares)
-        val updatedDebtor = debtor.clearProperties.markBankrupt
+        val updatedDebtor = debtor.clearProperties.markBankrupt.copy(getOutOfJailFree = 0)
         val updatedCreditor = creditor.copy(
-          ownedProperties = creditor.ownedProperties ++ propertyIds
+          ownedProperties = creditor.ownedProperties ++ propertyIds,
+          getOutOfJailFree = creditor.getOutOfJailFree + debtor.getOutOfJailFree
         )
         val updatedPlayers = players.map {
           case p if p.id == debtorId   => updatedDebtor
           case p if p.id == creditorId => updatedCreditor
           case p                       => p
         }
-        (copy(players = updatedPlayers, board = updatedBoard), transferred.reverse)
+        val updatedBank = bank
+          .returnHouses(returnedHouses)
+          .returnHotels(returnedHotels)
+        (
+          copy(players = updatedPlayers, board = updatedBoard, bank = updatedBank),
+          transferred.reverse
+        )
       case _ =>
         (this, Nil)
     }

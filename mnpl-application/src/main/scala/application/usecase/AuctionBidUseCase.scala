@@ -45,6 +45,7 @@ class AuctionBidUseCase(
           updatedProperty = property.assignOwner(winnerId)
           updatedGame <- updateWinner(payment.game, winnerId, updatedProperty)
           _ <- propertyRepository.update(updatedProperty)
+          _ <- updateProperties(payment.updatedProperties, propertyRepository)
         } yield {
           payment.events.foreach(eventPublisher.publish)
           updatedGame
@@ -71,5 +72,13 @@ class AuctionBidUseCase(
             .updateProperty(property)
             .copy(auction = None)
         )
+    }
+
+  private def updateProperties(
+      properties: List[Property],
+      repository: PropertyRepository
+  ): Either[String, Unit] =
+    properties.foldLeft(Right(()): Either[String, Unit]) { (acc, property) =>
+      acc.flatMap(_ => repository.update(property).map(_ => ()))
     }
 }
