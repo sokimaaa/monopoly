@@ -1,0 +1,21 @@
+@startuml
+title Create Game (Console)
+
+actor Player
+participant "MonopolyConsoleApp" as App
+participant "ConsoleGameController" as Controller
+participant "CreateGameUseCase" as UseCase
+participant "ClassicBoardFactory" as BoardFactory
+participant "DeckFactory" as DeckFactory
+participant "InMemoryGameRepository" as GameRepo
+
+App -> Controller: startNewGame()
+Controller -> Player: prompt players
+Controller -> UseCase: execute(playerNames)
+UseCase -> BoardFactory: createBoard()
+UseCase -> DeckFactory: chanceDeck(deckSeed)
+UseCase -> DeckFactory: communityDeck(deckSeed)
+UseCase -> GameRepo: save(game)
+UseCase --> Controller: Right(game)
+Controller --> App: gameId
+@enduml

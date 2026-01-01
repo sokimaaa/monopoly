@@ -1,0 +1,25 @@
+@startuml
+title End Turn
+
+actor Player
+participant "ConsoleGameController" as Controller
+participant "EndTurnUseCase" as UseCase
+participant "InMemoryGameRepository" as GameRepo
+participant "Game" as Game
+participant "ConsoleEventPublisher" as EventPublisher
+
+Player -> Controller: end turn
+Controller -> UseCase: execute(gameId)
+UseCase -> GameRepo: findById(gameId)
+alt extra roll available
+  UseCase -> Game: allowExtraRoll()
+else normal advance
+  UseCase -> Game: advanceTurnSkippingBankrupt()
+  UseCase -> Game: checkGameOver()
+end
+UseCase -> GameRepo: update(game)
+opt game finished
+  UseCase -> EventPublisher: publish(GameFinished)
+end
+UseCase --> Controller: nextGame
+@enduml

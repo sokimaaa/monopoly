@@ -1,0 +1,20 @@
+@startuml
+title Buy Property
+
+actor Player
+participant "ConsoleGameController" as Controller
+participant "BuyPropertyUseCase" as UseCase
+participant "InMemoryGameRepository" as GameRepo
+participant "PropertyService" as PropertyService
+participant "InMemoryPropertyRepository" as PropertyRepo
+participant "ConsoleEventPublisher" as EventPublisher
+
+Player -> Controller: buy command
+Controller -> UseCase: execute(gameId)
+UseCase -> GameRepo: findById(gameId)
+UseCase -> PropertyService: purchaseProperty(player, property)
+UseCase -> PropertyRepo: update(property)
+UseCase -> GameRepo: update(game)
+UseCase -> EventPublisher: publish(PropertyPurchased)
+UseCase --> Controller: (game, property, event)
+@enduml
