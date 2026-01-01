@@ -1,0 +1,18 @@
+@startuml
+title Decline Property And Start Auction
+
+actor Player
+participant "ConsoleGameController" as Controller
+participant "DeclinePropertyUseCase" as UseCase
+participant "InMemoryGameRepository" as GameRepo
+participant "Game" as Game
+participant "ConsoleEventPublisher" as EventPublisher
+
+Player -> Controller: decline command
+Controller -> UseCase: execute(gameId)
+UseCase -> GameRepo: findById(gameId)
+UseCase -> Game: startAuction(propertyId, bidders)
+UseCase -> GameRepo: update(game)
+UseCase -> EventPublisher: publish(PropertyAvailable)
+UseCase --> Controller: updatedGame
+@enduml

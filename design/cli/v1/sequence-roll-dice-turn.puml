@@ -1,0 +1,32 @@
+@startuml
+title Roll Dice Turn
+
+actor Player
+participant "ConsoleGameController" as Controller
+participant "RollDiceUseCase" as UseCase
+participant "InMemoryGameRepository" as GameRepo
+participant "RandomDiceRoller" as DiceRoller
+participant "MovementService" as MovementService
+participant "SquareActionService" as SquareActionService
+participant "PaymentService" as PaymentService
+participant "InMemoryPropertyRepository" as PropertyRepo
+participant "ConsoleEventPublisher" as EventPublisher
+
+Player -> Controller: roll command
+Controller -> UseCase: execute(gameId)
+UseCase -> GameRepo: findById(gameId)
+UseCase -> DiceRoller: roll()
+UseCase -> MovementService: movePlayer(currentPlayer, roll, board)
+UseCase -> SquareActionService: determineAction(square, game, roll)
+alt Property available
+  UseCase -> EventPublisher: publish(PropertyAvailable)
+else Pay rent or tax
+  UseCase -> PaymentService: pay(game, payer, payee, amount)
+  UseCase -> PropertyRepo: update(property)
+  UseCase -> EventPublisher: publish(RentPaid/TaxPaid)
+else No action
+  UseCase -> EventPublisher: publish(PlayerMoved)
+end
+UseCase -> GameRepo: update(updatedGame)
+UseCase --> Controller: (game, roll, events)
+@enduml

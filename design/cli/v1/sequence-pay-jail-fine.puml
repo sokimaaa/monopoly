@@ -1,0 +1,20 @@
+@startuml
+title Pay Jail Fine
+
+actor Player
+participant "ConsoleGameController" as Controller
+participant "PayJailFineUseCase" as UseCase
+participant "InMemoryGameRepository" as GameRepo
+participant "PaymentService" as PaymentService
+participant "InMemoryPropertyRepository" as PropertyRepo
+participant "ConsoleEventPublisher" as EventPublisher
+
+Player -> Controller: pay jail fine
+Controller -> UseCase: execute(gameId)
+UseCase -> GameRepo: findById(gameId)
+UseCase -> PaymentService: pay(game, playerId, Bank, Money(50))
+UseCase -> PropertyRepo: update(property)
+UseCase -> GameRepo: update(game)
+UseCase -> EventPublisher: publish(payment events)
+UseCase --> Controller: updatedGame
+@enduml
