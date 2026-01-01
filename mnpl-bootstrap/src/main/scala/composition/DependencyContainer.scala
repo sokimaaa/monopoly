@@ -14,7 +14,7 @@ import application.usecase.{
 }
 import domain.Money
 import domain.service.*
-import infrastructure.adapter.cli.ConsoleGameController
+import infrastructure.adapter.cli.TuiGameController
 import infrastructure.adapter.event.ConsoleEventPublisher
 import infrastructure.adapter.persistence.{InMemoryGameRepository, InMemoryPropertyRepository}
 import infrastructure.factory.ClassicBoardFactory
@@ -108,7 +108,7 @@ object DependencyContainer {
   )
 
   // Presentation Layer
-  val consoleController: ConsoleGameController = new ConsoleGameController(
+  val tuiController: TuiGameController = new TuiGameController(
     createGameUseCase,
     rollDiceUseCase,
     buyPropertyUseCase,

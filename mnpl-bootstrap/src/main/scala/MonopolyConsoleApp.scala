@@ -4,17 +4,12 @@ object MonopolyConsoleApp extends App {
 
   import composition.DependencyContainer.*
 
-  consoleController.displayWelcome()
+  tuiController.displayWelcome()
 
-  consoleController.startNewGame() match {
+  tuiController.startNewGame() match {
     case Right(gameId) =>
-      println(s"\n✅ Game created: ${gameId.value}")
-      println("Starting game...\n")
-      consoleController.gameLoop(gameId)
-
-    case Left(error) =>
-      println(s"❌ Failed to create game: $error")
+      tuiController.gameLoop(gameId)
+    case Left(_) =>
+      ()
   }
-
-  println("\n👋 Thanks for playing!")
 }

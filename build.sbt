@@ -24,7 +24,8 @@ lazy val mnplApplication = (project in file("mnpl-application"))
 lazy val mnplInfraCli = (project in file("mnpl-infra-cli"))
   .settings(commonSettings)
   .settings(
-    name := "mnpl-infra-cli"
+    name := "mnpl-infra-cli",
+    libraryDependencies += "com.googlecode.lanterna" % "lanterna" % "3.1.2"
   )
   .dependsOn(mnplApplication, mnplDomain)
 
